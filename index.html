@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Decibel Meter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Main Display -->
+        <div class="main-display" id="mainDisplay">
+        <div class="gauge-container">
+            <!-- Circular Gauge -->
+            <div class="gauge" id="gauge">
+                <div class="gauge-background" id="gaugeBackground"></div>
+                <div class="gauge-glass"></div>
+                <div class="gauge-inner">
+                    <div class="gauge-fill" id="gaugeFill"></div>
+                    <div class="gauge-value" id="gaugeValue">0</div>
+                    <div class="gauge-unit">dB</div>
+                </div>
+            </div>
+            
+            <!-- Trailing Graph Component -->
+            <div class="trailing-graph" id="trailingGraph">
+                <div class="trailing-graph-header">
+                    <div class="trailing-graph-value" id="trailingGraphValue">0</div>
+                    <div class="trailing-graph-unit">dB</div>
+                </div>
+                <div class="trailing-graph-container">
+                    <canvas id="trailingGraphCanvas" class="trailing-graph-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+            
+            <div class="info-panel">
+                <div class="info-item">
+                    <span class="info-label">Max:</span>
+                    <span class="info-value" id="maxValue">0 dB</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Time:</span>
+                    <span class="info-value" id="elapsedTime">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-header">
+                <h3>Settings</h3>
+                <button class="close-settings" id="closeSettings">×</button>
+            </div>
+            
+            <div class="settings-content">
+                <div class="setting-group">
+                    <label for="pollingUrl">Polling URL:</label>
+                    <input type="text" id="pollingUrl" value="http://localhost:3000/proxy/meter/livedata">
+                </div>
+                
+                <div class="setting-group">
+                    <label for="autoPolling">Auto Polling:</label>
+                    <input type="checkbox" id="autoPolling" checked>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="pollingInterval">Polling Interval (ms):</label>
+                    <input type="number" id="pollingInterval" value="100" min="50" max="5000">
+                </div>
+                
+                <div class="setting-group">
+                    <label for="jsonPath">JSON Path for Current Decibel:</label>
+                    <input type="text" id="jsonPath" value="Channels.0.Level" placeholder="e.g., Channels.0.Level, Channels.0.Peak">
+                    <small class="setting-help">Path to current decibel reading</small>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="maxJsonPath">JSON Path for Max Decibel:</label>
+                    <input type="text" id="maxJsonPath" value="Channels.0.Max" placeholder="e.g., Channels.0.Max, Channels.0.Equivalent Level Max">
+                    <small class="setting-help">Path to maximum decibel reading</small>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="elapsedJsonPath">JSON Path for Elapsed Time:</label>
+                    <input type="text" id="elapsedJsonPath" value="Channels.0.Elapsed Time" placeholder="e.g., Channels.0.Elapsed Time">
+                    <small class="setting-help">Path to elapsed time since measurement started</small>
+                </div>
+                
+                <div class="setting-group">
+                    <button type="button" id="testPolling" class="test-button">Test Polling</button>
+                    <button type="button" id="showJsonPreview" class="test-button">Show JSON Preview</button>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="enableLogging">Enable Logging:</label>
+                    <input type="checkbox" id="enableLogging" checked>
+                </div>
+                
+                <div class="setting-group">
+                    <button type="button" id="clearLogs" class="test-button">Clear Logs</button>
+                    <button type="button" id="resetSettings" class="test-button">Reset Settings</button>
+                </div>
+                
+                <div class="setting-group">
+                    <label>Activity Log:</label>
+                    <div class="logging-content" id="loggingContent">
+                        <div class="log-entry">Application started</div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="gaugeColor">Gauge Color:</label>
+                    <div class="color-input-container">
+                        <input type="color" id="gaugeColor" value="#00ff88">
+                        <input type="text" id="gaugeColorHex" value="#00ff88" placeholder="#00ff88" maxlength="7">
+                    </div>
+                </div>
+                
+        <div class="setting-group">
+            <label for="canvasColor">Canvas Color:</label>
+            <div class="color-input-container">
+                <input type="color" id="canvasColor" value="#000000">
+                <input type="text" id="canvasColorHex" value="#000000" placeholder="#000000" maxlength="7">
+            </div>
+            <small class="setting-help">Background color of the entire page</small>
+        </div>
+        
+        <div class="setting-group">
+            <label for="backgroundColor">Gauge Background Color:</label>
+            <div class="color-input-container">
+                <input type="color" id="backgroundColor" value="#1a1a2e">
+                <input type="text" id="backgroundColorHex" value="#1a1a2e" placeholder="#1a1a2e" maxlength="7">
+            </div>
+            <small class="setting-help">Background color of the gauge container</small>
+        </div>
+        
+        <div class="setting-group">
+            <label for="textColor">Text Color:</label>
+            <div class="color-input-container">
+                <input type="color" id="textColor" value="#ffffff">
+                <input type="text" id="textColorHex" value="#ffffff" placeholder="#ffffff" maxlength="7">
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <label for="infoPanelColor">Info Panel Background Color:</label>
+            <div class="color-input-container">
+                <input type="color" id="infoPanelColor" value="#2a2a3e">
+                <input type="text" id="infoPanelColorHex" value="#2a2a3e" placeholder="#2a2a3e" maxlength="7">
+            </div>
+            <small class="setting-help">Background color of the info panel below the gauge</small>
+        </div>
+        
+        <div class="setting-group">
+            <label for="gaugeGlowColor">Gauge Glow Color:</label>
+            <div class="color-input-container">
+                <input type="color" id="gaugeGlowColor" value="#00d4ff">
+                <input type="text" id="gaugeGlowColorHex" value="#00d4ff" placeholder="#00d4ff" maxlength="7">
+            </div>
+            <small class="setting-help">Color of the glow/shadow around the gauge</small>
+        </div>
+        
+        <div class="setting-group">
+            <label for="gaugeGlowIntensity">Gauge Glow Intensity:</label>
+            <input type="range" id="gaugeGlowIntensity" min="0" max="50" value="20" step="1">
+            <span id="gaugeGlowIntensityValue">20px</span>
+            <small class="setting-help">Intensity of the glow effect (0-50px)</small>
+        </div>
+        
+        <div class="setting-group">
+            <label for="transparentMode">Transparent Mode (for OBS):</label>
+            <input type="checkbox" id="transparentMode">
+            <small class="setting-help">Makes background transparent for OBS Studio overlay</small>
+        </div>
+        
+        <div class="setting-group">
+            <label for="gaugeDesign">Gauge Design:</label>
+            <select id="gaugeDesign">
+                <option value="liquid-glass">Liquid Glass (Default)</option>
+                <option value="neon-glow">Neon Glow</option>
+                <option value="minimal-flat">Minimal Flat</option>
+                <option value="retro-analog">Retro Analog</option>
+            </select>
+            <small class="setting-help">Choose the visual style of the gauge</small>
+        </div>
+        
+        <div class="setting-group">
+            <label for="trailingGraphToggle">Trailing Graph:</label>
+            <div class="toggle-container">
+                <input type="checkbox" id="trailingGraphToggle" class="toggle-input">
+                <label for="trailingGraphToggle" class="toggle-label">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <small class="setting-help">Enable horizontal bar chart instead of circular gauge</small>
+        </div>
+                
+                <div class="setting-group">
+                    <label for="containerWidth">Container Width:</label>
+                    <input type="number" id="containerWidth" value="400" min="200" max="1200" step="10">
+                    <span>px</span>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="containerHeight">Container Height:</label>
+                    <input type="number" id="containerHeight" value="500" min="200" max="1200" step="10">
+                    <span>px</span>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="showSettings">Show Settings Button:</label>
+                    <input type="checkbox" id="showSettings" checked>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Toggle Button -->
+        <button class="settings-toggle" id="settingsToggle" title="Settings (Press 'S' key)">⚙️</button>
+        
+        <!-- Keyboard Shortcut Hint -->
+        <div class="keyboard-hint" id="keyboardHint">
+            Press 'S' for Settings • 'Esc' to close • 'Ctrl+R' to reset
+        </div>
+    </div>
+
+    <!-- JSON Preview Modal -->
+    <div class="json-preview-modal" id="jsonPreviewModal">
+        <div class="json-preview-content">
+            <div class="json-preview-header">
+                <h3>JSON Response Preview</h3>
+                <button class="close-json-preview" id="closeJsonPreview">×</button>
+            </div>
+            <div class="json-preview-body">
+                <div class="json-status" id="jsonStatus">Click "Test Polling" to fetch data</div>
+                <pre class="json-content" id="jsonContent">No data available</pre>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
